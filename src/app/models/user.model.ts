@@ -5,8 +5,9 @@ export class User {
     private _username: string,
     private _hand: Card[],
     private _balance: number,
+    private _handValue: number = 0,
+    private _secondHandValue: number = 0,
     private _secondHand: Card[] = [],
-    private _handValue: number = 0
   ) { }
 
   //Getterek:
@@ -30,6 +31,10 @@ export class User {
     return this._handValue
   }
 
+  get secondHandValue(): number {
+    return this._secondHandValue
+  }
+
   //Setterek:
   set username(newUsername: string) {
     this._username = newUsername;
@@ -47,13 +52,31 @@ export class User {
     this._secondHand = newSecondHand;
   }
 
-  set handValue(newValue: number){
+  set handValue(newValue: number) {
     this._handValue = newValue
   }
 
+  set secondHandValue(newValue: number) {
+    this._secondHandValue = newValue
+  }
+
   //Egyeb:
-  addCardToHand(addedCard: Card): void {
-    this._hand.push(addedCard)
-    this.handValue = this.handValue + addedCard.value
+  addCardToHand(addedCard: Card, wantedHand: "hand1" | "hand2" = "hand1"): void {
+    if (wantedHand == "hand1") {
+      this._hand.push(addedCard)
+      this._handValue += addedCard.value
+
+    } else if (wantedHand == "hand2") {
+      this._secondHand.push(addedCard)
+      this._secondHandValue += addedCard.value
+    }
+  }
+
+  getWantedHandValue(wantedHand: "hand1" | "hand2"): number{
+    if (wantedHand == "hand1"){
+      return this._handValue
+    } else {
+      return this._secondHandValue
+    }
   }
 }

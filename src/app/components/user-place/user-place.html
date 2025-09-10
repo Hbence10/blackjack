@@ -2,25 +2,32 @@
   <div class="row">
     <div class="col-lg-2 d-flex flex-column">
       <!-- roundOver mindenhova -->
-      <button class="btn btn-danger my-2" [disabled]="gameService.roundOver || gameService.user().hand.length != 2 || isStanded || isDoubled" (click)="double()">Double</button>
-      <button class="btn btn-danger my-2" [disabled]="gameService.roundOver || gameService.user().secondHand.length != 0 || gameService.user().hand[0].value != gameService.user().hand[1].value || gameService.user().hand.length == 2" (click)="split()">Split</button>
+      <button class="btn btn-danger my-2" [disabled]="gameService.roundOver || gameService.selectedHandList().length != 2 || isStanded || isDoubled" (click)="double()">Double</button>
+      <button class="btn btn-danger my-2" [disabled]="gameService.user().secondHand.length != 0 || gameService.user().hand[0].value != gameService.user().hand[1].value || gameService.user().hand.length > 2" (click)="split()">Split</button>
       <button class="btn btn-danger my-2" [disabled]="gameService.roundOver || isStanded" (click)="stand()">Stand</button>
       <button class="btn btn-danger my-2" [disabled]="gameService.roundOver || isStanded || isDoubled " (click)="hit()">Hit</button>
     </div>
 
-    <div class="col-lg-10">
-      @for (card of gameService.user().hand; track $index) {
-        <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg mx-1"/>
+    <div [class.col-lg-10]="gameService.user().secondHand.length == 0" [class.col-lg-5]="gameService.user().secondHand.length != 0">
+      @if(gameService.user().secondHand.length != 0){
+        <h5 class="text-danger" [class.activeHand]="gameService.selectedHand() == 'hand1'">Hand 1</h5>
       }
-    </div>
-
-    <!-- @if(user().secondHand.length != 0){
-      <div class="col-lg-5">
-        @for (card of user().secondHand; track $index) {
+      <div>
+        @for (card of gameService.user().hand; track $index) {
           <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg mx-1"/>
         }
       </div>
-    } -->
+    </div>
 
+    @if(gameService.user().secondHand.length != 0){
+      <div class="col-lg-5">
+        <h5 class="text-danger" [class.activeHand]="gameService.selectedHand() == 'hand2'">Hand 2</h5>
+        <div>
+          @for (card of gameService.user().secondHand; track $index) {
+            <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg mx-1"/>
+          }
+        </div>
+      </div>
+    }
   </div>
 </div>

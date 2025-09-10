@@ -13,7 +13,6 @@ export class Game {
   chipsList = signal<Chips[]>([]);
   gameStarted: boolean = false
 
-  // gameOver: boolean = false
   roundOver: boolean = false
   showResultPage: boolean = false
 
@@ -23,6 +22,15 @@ export class Game {
     this.boxList().forEach(chip => sum += chip.value)
     return sum
   });
+
+  selectedHand = signal<"hand1" | "hand2">("hand1")
+  selectedHandList = computed(() => {
+    if(this.selectedHand() == "hand1"){
+      return this.user().hand
+    } else {
+      return this.user().secondHand
+    }
+  })
 
 
   resultObject!: { title: string, moneyResult: number };
@@ -57,10 +65,6 @@ export class Game {
         ))
       }
     }
-    // this.user().hand = [
-    //   this.deck.find(element => element.name.includes("ace"))!,
-    //   this.deck.find(element => element.value == 10)!,
-    // ]
   }
 
   createMoneyChips() {
@@ -78,7 +82,11 @@ export class Game {
       this.deck.splice(randomIndex, 1)
     }
 
-    this.checkRoundEnd("start", this.user().hand)
+    // const sameValues = this.deck.filter(elements => elements.value == 3)
+    // this.user().hand = [sameValues[0], sameValues[1]]
+    // console.log(this.user())
+
+    this.checkRoundEnd("start", this.user().hand, "hand1")
 
     for (let i: number = 0; i < 2; i++) {
       let randomIndex = Math.floor(Math.random() * this.deck.length)
@@ -87,14 +95,15 @@ export class Game {
     }
 
     this.dealer().hand[0].isUpsideDown = true
-    this.checkRoundEnd("start", this.user().hand)
+    this.checkRoundEnd("start", this.user().hand, "hand1")
   }
 
   dealersRound() {
     this.dealer().hand[0].isUpsideDown = false
     console.log(this.dealer())
     if (this.dealer().handValue >= 17) {
-      this.checkRoundEnd("dealersRound")
+      this.checkRoundEnd("dealersRound", this.user().hand, "hand1")
+      this.checkRoundEnd("dealersRound", this.user().secondHand, "hand2")
       return
     }
 
@@ -108,56 +117,64 @@ export class Game {
       this.dealer().addCardToHand(this.deck[randomIndex])
       this.deck.splice(randomIndex, 1)
     }
-    this.checkRoundEnd("dealersRound")
+    this.checkRoundEnd("dealersRound", this.user().hand, "hand1")
+    this.checkRoundEnd("dealersRound", this.user().secondHand, "hand2")
   }
 
-  checkRoundEnd(afterEventName: "hit" | "dealersRound" | "start", hand: Card[] = []) {
+  checkRoundEnd(afterEventName: "hit" | "dealersRound" | "start", hand: Card[], handName: "hand1" | "hand2") {
+    let handValue = 0;
+    hand.forEach(element => handValue += element.value)
+
+    if(this.user().secondHand.length == 0 && handName == "hand2"){
+      return
+    }
+
     //Egyboli gyozelem:
-    if (afterEventName == "start" && this.user().handValue == 21) {
+    if (afterEventName == "start" && handValue == 21) {
       console.log("osztas altal a user nyert")
-      this.setResultPage(this.boxValue()*3, "Blackjack")
+      this.setResultPage(this.boxValue() * 3, "Blackjack", handName)
 
     } else if (afterEventName == "dealersRound") {
       //dontetlen,
-      if (this.user().handValue == this.dealer().handValue) {
+      if (handValue == this.dealer().handValue) {
         console.log("dontetlen")
-        this.setResultPage(this.boxValue(), "Push")
+        this.setResultPage(this.boxValue(), "Push", handName)
       }
       //Mind a ketten 21 alatt vegeztek
-      else if (this.user().handValue < 21 && this.dealer().handValue < 21) {
+      else if (handValue < 21 && this.dealer().handValue < 21) {
         //Ha a user van kozelebb
-        if ((21 - this.user().handValue) < (21 - this.dealer().handValue)) {
+        if ((21 - handValue) < (21 - this.dealer().handValue)) {
           console.log("a user kozelebb van a 21-hez")
-          this.setResultPage(this.boxValue()*2, "Victory")
+          this.setResultPage(this.boxValue() * 2, "Victory", handName)
         }
         //Ha a dealer van kozelebb
-        else if ((21 - this.user().handValue) > (21 - this.dealer().handValue)) {
+        else if ((21 - handValue) > (21 - this.dealer().handValue)) {
           console.log("a dealer kozelebb van a 21-heze")
-          this.setResultPage(0, "Lose")
+          this.setResultPage(0, "Lose", handName)
         }
 
       }
       // az oszto meghaladja a 21-et
-      else if (this.user().handValue <= 21 && this.dealer().handValue > 21) {
+      else if (handValue <= 21 && this.dealer().handValue > 21) {
         console.log("Az oszto meghaladta a 21et")
-        this.setResultPage(this.boxValue()*2, "Dealer bust")
+        this.setResultPage(this.boxValue() * 2, "Dealer bust", handName)
       }
 
       //A jatekos eri el a 21et
-      else if(this.user().handValue == 21){
+      else if (handValue == 21) {
         console.log("a user nyert")
-        this.setResultPage(this.boxValue()*2.5, "Victory")
+        this.setResultPage(this.boxValue() * 2.5, "Victory", handName)
       }
 
       //A dealer eri el a 21et
-      else if(this.dealer().handValue == 21){
+      else if (this.dealer().handValue == 21) {
         console.log("a dealer nyert")
-        this.setResultPage(0, "Victory")
+        this.setResultPage(0, "Victory", handName)
       }
 
-    } else if (afterEventName == "hit" && this.user().handValue > 21) {
-        console.log("a user besokalt")
-        this.setResultPage(0, "User's bust")
+    } else if (afterEventName == "hit" && handValue > 21) {
+      console.log("a user besokalt")
+      this.setResultPage(0, "User's bust", handName)
     }
   }
 
@@ -167,15 +184,16 @@ export class Game {
     }
   }
 
-  setResultPage(prizeAmount: number, title: string) {
-    this.showResultPage = true
-    console.log(`a nyert osszeg: ${prizeAmount}`)
-    this.user().balance = this.user().balance + prizeAmount
-    this.resultObject = {moneyResult: prizeAmount, title: title}
-    this.checkGameOver()
+  setResultPage(prizeAmount: number, title: string, handName: string) {
+    // this.showResultPage = true
+    console.log(`a nyert osszeg: ${prizeAmount} a ${handName}-vel`)
+    // this.user().balance = this.user().balance + prizeAmount
+    // this.resultObject = { moneyResult: prizeAmount, title: title }
+    // this.checkGameOver()
+    // this.saveUsersStatsToLocalStorage()
   }
 
-  setNewRound(){
+  setNewRound() {
     this.boxList.set([])
     this.user.set(
       new User("", [], this.user().balance)
@@ -183,5 +201,9 @@ export class Game {
     this.gameStarted = false
     this.roundOver = false
     this.dealer.set(new User("dealer", [], 10000000))
+  }
+
+  saveUsersStatsToLocalStorage() {
+
   }
 }
