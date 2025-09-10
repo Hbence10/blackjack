@@ -24,6 +24,6 @@ export class Box {
 
   removeChipFromBox(selectedChip: Chips) {
     this.gameService.boxList().splice(this.gameService.boxList().indexOf(selectedChip), 1)
-    this.gameService.user().balance = this.gameService.user().balance + selectedChip.value
+    this.gameService.user.balance = this.gameService.user.balance + selectedChip.value
   }
 }

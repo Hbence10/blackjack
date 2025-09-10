@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Game } from '../../services/game';
+import { Hand } from './../../models/hand.model';
 
 @Component({
   selector: 'app-user-place',
@@ -7,57 +8,48 @@ import { Game } from '../../services/game';
   templateUrl: './user-place.html',
   styleUrl: './user-place.scss'
 })
-export class UserPlace {
+export class UserPlace implements OnInit{
   gameService = inject(Game)
+  handRows: Hand[][] = []
 
-  isDoubled = false
-  isStanded = false
-
+  ngOnInit(): void {
+    this.setHandRows()
+  }
 
   double() {
-    if(this.gameService.boxValue() *2 > this.gameService.user().balance){
-      alert("You don't have enough money for double.")
+    if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value *2 > this.gameService.user.balance){
+      alert("You don't have enough money for double!")
       return
     }
 
     this.gameService.boxList.set(this.gameService.boxList().flatMap(i => [i, i]))
-    this.isDoubled = true
+    this.gameService.user.handList[this.gameService.user.actualHandIndex].bet = (this.gameService.user.handList[this.gameService.user.actualHandIndex].bet * 2)
+    this.gameService.user.handList[this.gameService.user.actualHandIndex].isDoubled = true
+
     this.hit()
-    this.stand()
   }
 
   split() {
-    this.gameService.user().secondHand = [this.gameService.user().hand[1]]
-    this.gameService.user().secondHandValue = this.gameService.user().hand[1].value
+    const actaulHand: Hand = this.gameService.user.handList[this.gameService.user.actualHandIndex]
 
-    this.gameService.user().handValue = this.gameService.user().hand[1].value
-    this.gameService.user().hand.pop()
+    const newHand = new Hand([actaulHand.cardList[1]], actaulHand.cardList[1].value, actaulHand.bet)
 
+    this.gameService.user.handList[this.gameService.user.actualHandIndex].removeCard()
+    this.gameService.user.addHand(newHand)
+
+    this.setHandRows()
   }
 
   stand() {
-    console.log(this.gameService.selectedHand())
+    this.gameService.user.handList[this.gameService.user.actualHandIndex].isStanded = true
 
-    //Csak akkor fog egybol kovetkezni a dealer ha egy kezzel jatszunk
-    if(this.gameService.user().secondHand.length == 0){
+    if(this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length){
       this.gameService.dealersRound()
-      this.isStanded = true
     }
-    //ha mar spliteltunk
     else {
-      //ha mar a hand2-vel standelunk akkor jon csak kovinek a dealer
-      if(this.gameService.selectedHand() == "hand2"){
-        console.log("a hand2 standelt, a dealer kovetkezik  ")
-        this.gameService.dealersRound()
-        this.isStanded = true
-      }
-      //ha 2 kezzel jatszunk es az hand1-el standalunk akkor atvalt a hand2-re
-      else {
-        console.log("a hand1 standelt, valtas a hand2-re")
-        this.gameService.selectedHand.set("hand2")
-      }
+      this.gameService.user.actualHandIndex = (this.gameService.user.actualHandIndex + 1)
+      console.log(this.gameService.user.handList[this.gameService.user.actualHandIndex])
     }
-
   }
 
   hit() {
@@ -65,40 +57,39 @@ export class UserPlace {
     let selectedCard = this.gameService.deck[randomIndex];
 
     if (selectedCard.name.includes("ace")) {
-      if (this.gameService.user().getWantedHandValue(this.gameService.selectedHand()) + 11 <= 21) {
+      if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value + 11 <= 21) {
         selectedCard.value = 11
       } else {
         selectedCard.value = 1
       }
     }
 
-    //hozzaadja az adott kezhez
-    this.gameService.user().addCardToHand(selectedCard, this.gameService.selectedHand())
-    this.gameService.deck.splice(randomIndex, 1)
+    this.gameService.user.handList[this.gameService.user.actualHandIndex].addCard(selectedCard)
+    console.log(this.gameService.user.handList[this.gameService.user.actualHandIndex])
 
-    console.log(this.gameService.user().getWantedHandValue(this.gameService.selectedHand()))
 
-    //Ha spliteltunk
-    if(this.gameService.user().secondHand.length != 0){
-      //ha a hand1 teli van/eri el a 21et
-      if(this.gameService.user().getWantedHandValue("hand1") >= 21 && this.gameService.selectedHand() == "hand1"){
-        // Valtunk a hand2-re
-        console.log("besokal a hand1. valtunk a hand2-re")
-        this.gameService.selectedHand.set("hand2")
-      }
-      //ha a hand2 teli van/eri el a 21et
-      else if (this.gameService.user().getWantedHandValue("hand2") >= 21 && this.gameService.selectedHand() == "hand2"){
-        console.log("besokal a hand2. kezdodik a dealer kore")
+    if(this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length){
+      if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value >= 21){
         this.gameService.dealersRound()
       }
-    //Ha nem spliteltunk akkor nezi csak a hand1-et nezi meg
     } else {
-      this.gameService.checkRoundEnd("hit", this.gameService.user().hand, "hand1")
-      if (this.gameService.user().handValue == 21){
-        this.gameService.dealersRound()
+      // this.gameService.user.handList[this.gameService.user.actualHandIndex].addCard(selectedCard)
+      if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value >= 21){
+        this.gameService.user.actualHandIndex = (this.gameService.user.actualHandIndex + 1 )
       }
     }
 
+    this.setHandRows()
+  }
 
+  setHandRows(){
+    this.handRows = []
+    for(let i: number = 0; i < this.gameService.user.handList.length; i+= 2){
+      const handRow: Hand[] = []
+      for (let j: number = i; j< i+2; j++){
+        handRow.push(this.gameService.user.handList[j])
+      }
+      this.handRows.push(handRow)
+    }
   }
 }
