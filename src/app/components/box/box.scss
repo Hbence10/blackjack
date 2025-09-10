@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap');
+
+#box{
+  width: 600px;
+  height: 350px;
+  overflow-y: auto;
+  border: 15px solid white;
+  border-radius: 25px;
+  padding: 20px;
+
+  p{
+    font-family: "Oswald", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 40px;
+  }
+}
+
+.moneyImg{
+  width: 100px !important;
+  cursor: pointer;
+}
+
+.disableEvent{
+  pointer-events: none;
+}

@@ -1,0 +1,37 @@
+<div class="container-fluid" style="width: 100vw; height: 100vh">
+  <div class="row h-100">
+    <div
+      class="col-lg-12 h-100 d-flex justify-content-center align-items-center"
+    >
+      <div id="mainContainer" class="container-fluid bg-danger d-flex flex-column justify-content-between align-items-center">
+        <div class="row w-100">
+          <div class="col-lg-12 d-flex justify-content-between align-items-center flex-row w-100">
+            <div></div>
+            <h1 class="text-center my-4">{{gameService.resultObject.title}}</h1>
+            <button class="btn btn-success" (click)="close()">X</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-12">
+            <p>
+              @if(gameService.resultObject.moneyResult == 0){
+                You lost
+              } @else {
+                You won
+              }
+              {{gameService.boxValue()}}$
+            </p>
+          </div>
+        </div>
+
+        <div class="row my-4">
+          <div class="col-lg-12">
+            <!-- <button class="btn btn-success">Kilépés</button> -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

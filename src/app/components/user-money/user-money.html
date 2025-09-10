@@ -1,0 +1,26 @@
+<div class="container-fluid d-flex flex-column justify-content-center align-content-center" id="userMoney">
+  <div class="row">
+    <div class="col-lg-12 d-flex justify-content-center align-items-center">
+      @for (moneyChip of gameService.chipsList() |slice:4:7; track $index) {
+        <img [class.disableEvent]="gameService.gameStarted" (click)="addChipToBox(moneyChip)" [src]="moneyChip.imgPath" [alt]="moneyChip.value+'$'" class="img-fluid moneyImg">
+      }
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12 d-flex justify-content-center align-items-center">
+     @for (moneyChip of gameService.chipsList() |slice:0:4; track $index) {
+        <img [class.disableEvent]="gameService.gameStarted" (click)="addChipToBox(moneyChip)" [src]="moneyChip.imgPath" alt="" class="img-fluid moneyImg">
+      }
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12">
+      <p class="text-center m-0"><span class="fw-bold">Your balance:</span>{{gameService.user().balance}}$</p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-12 d-flex justify-content-center align-items-center">
+      <button [disabled]="gameService.gameStarted || gameService.roundOver || gameService.user().balance == 0" class="btn btn-danger" (click)="allIn()">All-In</button>
+    </div>
+  </div>
+</div>

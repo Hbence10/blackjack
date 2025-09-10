@@ -1,0 +1,19 @@
+.moneyImg{
+  width: 100px !important;
+  cursor: pointer;
+}
+
+#userMoney{
+  width: 550px;
+  height: 350px;
+  border: 15px solid white;
+  border-radius: 25px;
+
+  p{
+    color: white  ;
+  }
+}
+
+.disableEvent{
+  pointer-events: none !important;
+}

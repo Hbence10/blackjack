@@ -1,0 +1,45 @@
+<div class="container-fluid d-flex flex-column justify-content-between" >
+
+  <!-- Az osztó sora -->
+  <div class="row">
+    <div class="col-lg-12 d-flex justify-content-center align-items-center">
+      @for (card of gameService.dealer().hand; track $index) {
+        <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg">
+      }
+    </div>
+  </div>
+
+  <!-- Jatekter -->
+  <div class="row">
+    <div class="col-lg-12 d-flex flex-row align-content-center justify-content-center">
+      <div class="d-flex justify-content-center align-items-center">
+        @if(!gameService.gameStarted ){
+          <button class="btn btn-danger" style="height: 50px;" [disabled]="gameService.boxList().length == 0" (click)="setStartPage()">Start the Game</button>
+        } @else {
+          <img src="assets/cardBg.png" alt="" class="cardImg" style="width: 150px;">
+        }
+        <app-box />
+        @if(gameService.roundOver){
+          <button class="btn btn-danger" (click)="gameService.setNewRound()">New round!</button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Jatekos sora: -->
+  <div class="row mt-5">
+    <div class="col-lg-8 ">
+      @if(gameService.gameStarted){
+        <app-user-place />
+      }
+    </div>
+
+    <div class="col-lg-4 d-flex justify-content-end align-items-center">
+      <app-user-money style="position: fixed; bottom: 0px;"/>
+    </div>
+  </div>
+</div>
+
+@if(gameService.showResultPage){
+  <app-result-page style="position: fixed; top: 0px; left: 0px;"/>
+}

@@ -1,0 +1,18 @@
+<div class="container-fluid">
+    <div class="row my-5">
+      <div class="col-lg-12 d-flex flex-row justify-content-center align-content-center">
+        <div id="box" class="mx-2 d-flex flex-column justify-content-center align-items-center">
+          @for (chipRow of splittedChipsRow(); track $index) {
+            <div>
+            @for (chip of chipRow; track $index){
+              <img [class.disableEvent]="gameService.gameStarted" (click)="removeChipFromBox(chip)" class="img-fluid moneyImg" [src]="chip.imgPath" alt="">
+            }
+            </div>
+          }
+          @empty {
+            <p>To start, place your bet</p>
+          }
+        </div>
+    </div>
+  </div>
+</div>
