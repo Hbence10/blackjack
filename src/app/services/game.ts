@@ -1,15 +1,18 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { User } from '../models/user.model';
 import { Card } from '../models/card.model';
 import { Chips } from '../models/chips.model';
 import { Hand } from '../models/hand.model';
+import { ResultDetails } from '../models/result.model';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
 })
 export class Game {
+  router = inject(Router)
   deck: Card[] = []
-  user = new User("user", 3000)
+  user = new User("user", 50)
   dealer = new User("dealer", 10000000)
   chipsList = signal<Chips[]>([]);
   gameStarted: boolean = false
@@ -24,7 +27,7 @@ export class Game {
     return sum
   });
 
-  resultObject!: { title: string, moneyResult: number };
+  resultList: ResultDetails[] = []
 
   constructor() {
     this.setDeck()
@@ -73,142 +76,163 @@ export class Game {
     for (let i: number = 0; i < 2; i++) {
       let randomIndex = Math.floor(Math.random() * this.deck.length)
       let selectedCard = this.deck[randomIndex]
-      userCardList.push(selectedCard)
+
+      if(selectedCard.name.includes("ace")){
+        if (userHandValue + 11 <= 21){
+          selectedCard.value = 11
+        } else {
+          selectedCard.value = 1
+        }
+      }
+
       userHandValue += selectedCard.value
+      userCardList.push(selectedCard)
       this.deck.splice(randomIndex, 1)
     }
     this.user.addHand(new Hand(userCardList, userHandValue, this.boxValue()))
-
-    // const sameValues: Card[] = this.deck.filter(elements => elements.value == 3)
-    // this.user.addHand(new Hand([sameValues[0], sameValues[1]], 6, this.boxValue()))
-
-    this.checkRoundEnd("start", this.user.handList[this.user.actualHandIndex].cardList)
+    this.checkRoundEnd("start", this.user.handList[this.user.actualHandIndex], 0)
 
     const dealerCardList: Card[] = []
     let dealerHandValue: number = 0
-
     for (let i: number = 0; i < 2; i++) {
       let randomIndex = Math.floor(Math.random() * this.deck.length)
-      dealerCardList.push(this.deck[randomIndex])
-      dealerHandValue += this.deck[randomIndex].value
+      let selectedCard = this.deck[randomIndex]
+      if(selectedCard.name.includes("ace")){
+        if (dealerHandValue + 11 <= 21){
+          selectedCard.value = 11
+        } else {
+          selectedCard.value = 1
+        }
+      }
+
+      dealerCardList.push(selectedCard)
+      dealerHandValue += selectedCard.value
       this.deck.splice(randomIndex, 1)
     }
     dealerCardList[0].isUpsideDown = true
     this.dealer.addHand(new Hand(dealerCardList, dealerHandValue, 0))
-
-    this.checkRoundEnd("start", this.user.handList[0].cardList)
-
-    // this.deck = [sameValues[2], sameValues[3]]
   }
 
   dealersRound() {
     this.dealer.handList[0].cardList[0].isUpsideDown = false
-    console.log(this.dealer)
 
     if (this.dealer.handList[0].value >= 17) {
-      for (let i : number = 0; i < this.user.handList.length; i++){
-        console.log(`hand${i}`)
-        this.checkRoundEnd("dealersRound", this.user.handList[i].cardList)
+      // this.user.handList.forEach(hand => this.checkRoundEnd("dealersRound", hand, this.user.handList.indexOf(hand)))
+      for (let i: number = 0; i < this.user.handList.length; i++) {
+        this.checkRoundEnd("dealersRound", this.user.handList[i], i)
       }
       return
     }
 
     let randomIndex = Math.floor(Math.random() * this.deck.length)
-    this.dealer.handList[0].addCard(this.deck[randomIndex])
+    const selectedCard = this.deck[randomIndex]
+    const dealerValue = this.dealer.handList[0].value
+
+    if (selectedCard.name.includes("ace")) {
+      if (dealerValue + 11 > 17 && dealerValue + 11 < 21) {
+        selectedCard.value = 11
+      } else if (dealerValue + 11 > 21) {
+        selectedCard.value = 1
+      }
+    }
+
+    this.dealer.handList[0].addCard(selectedCard)
     this.deck.splice(randomIndex, 1)
 
     while (this.dealer.handList[0].value < 17) {
-      randomIndex = Math.floor(Math.random() * this.deck.length)
-      this.dealer.handList[0].addCard(this.deck[randomIndex])
+      let randomIndex = Math.floor(Math.random() * this.deck.length)
+      const selectedCard = this.deck[randomIndex]
+      const dealerValue = this.dealer.handList[0].value
+
+      if (selectedCard.name.includes("ace")) {
+        if (dealerValue + 11 > 17 && dealerValue + 11 < 21) {
+          selectedCard.value = 11
+        } else if (dealerValue + 11 > 21) {
+          selectedCard.value = 1
+        }
+      }
+
+      this.dealer.handList[0].addCard(selectedCard)
       this.deck.splice(randomIndex, 1)
     }
 
-
-    for (let i : number = 0; i < this.user.handList.length; i++){
-      console.log(`hand${i}`)
-      this.checkRoundEnd("dealersRound", this.user.handList[i].cardList)
+    // this.user.handList.forEach(hand => this.checkRoundEnd("dealersRound", hand, this.user.handList.indexOf(hand)))
+    for (let i: number = 0; i < this.user.handList.length; i++) {
+      this.checkRoundEnd("dealersRound", this.user.handList[i], i)
     }
   }
 
-  checkRoundEnd(afterEventName: "hit" | "dealersRound" | "start", hand: Card[]) {
-    let handValue = 0;
-    hand.forEach(element => handValue += element.value)
-
+  checkRoundEnd(afterEventName: "hit" | "dealersRound" | "start", hand: Hand, handIndex: number) {
     //Egyboli gyozelem:
-    if (afterEventName == "start" && handValue == 21) {
-      console.log("osztas altal a user nyert")
-      this.setResultPage(this.boxValue() * 3, "Blackjack")
-
+    if (afterEventName == "start" && hand.value == 21) {
+      this.setResultPage(hand.bet * 3, "Blackjack", handIndex)
+      this.showResultPage = true
     } else if (afterEventName == "dealersRound") {
       //dontetlen,
-      if (handValue == this.dealer.handList[0].value) {
-        console.log("dontetlen")
-        this.setResultPage(this.boxValue(), "Push")
+      if (hand.value == this.dealer.handList[0].value) {
+        this.setResultPage(hand.bet, "Push", handIndex)
       }
       //Mind a ketten 21 alatt vegeztek
-      else if (handValue < 21 && this.dealer.handList[0].value) {
+      else if (hand.value < 21 && this.dealer.handList[0].value < 21) {
         //Ha a user van kozelebb
-        if ((21 - handValue) < (21 - this.dealer.handList[0].value)) {
-          console.log("a user kozelebb van a 21-hez")
-          this.setResultPage(this.boxValue() * 2, "Victory")
+        if ((21 - hand.value) < (21 - this.dealer.handList[0].value)) {
+          this.setResultPage(hand.bet * 2, "Victory", handIndex)
         }
         //Ha a dealer van kozelebb
-        else if ((21 - handValue) > (21 - this.dealer.handList[0].value)) {
-          console.log("a dealer kozelebb van a 21-heze")
-          this.setResultPage(0, "Lose")
+        else if ((21 - hand.value) > (21 - this.dealer.handList[0].value)) {
+          this.setResultPage(hand.value * -1, "Lose", handIndex)
         }
-
       }
+
       // az oszto meghaladja a 21-et
-      else if (handValue <= 21 && this.dealer.handList[0].value > 21) {
-        console.log("Az oszto meghaladta a 21et")
-        this.setResultPage(this.boxValue() * 2, "Dealer bust")
+      else if (hand.value <= 21 && this.dealer.handList[0].value > 21) {
+        this.setResultPage(hand.bet * 2, "Dealer bust", handIndex)
       }
 
       //A jatekos eri el a 21et
-      else if (handValue == 21) {
-        console.log("a user nyert")
-        this.setResultPage(this.boxValue() * 2.5, "Victory")
+      else if (hand.value == 21) {
+        console.log("asd")
+        this.setResultPage(hand.bet * 2.5, "Victory", handIndex)
       }
 
       //A dealer eri el a 21et
       else if (this.dealer.handList[0].value == 21) {
-        console.log("a dealer nyert")
-        this.setResultPage(0, "Victory")
+        this.setResultPage(hand.value * -1, "Victory", handIndex)
       }
 
-    } else if (afterEventName == "hit" && handValue > 21) {
-      console.log("a user besokalt")
-      this.setResultPage(0, "User's bust")
+    } else if (afterEventName == "hit") {
+      if (hand.value > 21) {
+        this.setResultPage(0, "User's bust", handIndex)
+      } else if (hand.value == 21) {
+        this.setResultPage(hand.bet * 2.5, "Victory", handIndex)
+      }
     }
   }
 
-  // checkGameOver() {
-  //   if (this.user().balance <= 0) {
-  //     console.log("elfogyott a penzed!")
-  //   }
-  // }
-
-  setResultPage(prizeAmount: number, title: string) {
-    // this.showResultPage = true
-    console.log(`a nyert osszeg: ${prizeAmount}`)
-    // this.user().balance = this.user().balance + prizeAmount
-    // this.resultObject = { moneyResult: prizeAmount, title: title }
-    // this.checkGameOver()
-    // this.saveUsersStatsToLocalStorage()
+  checkGameOver() {
+    if (this.user.balance <= 0) {
+      this.router.navigate([""])
+    }
   }
 
-  // setNewRound() {
-  //   this.boxList.set([])
-  //   this.user.set(
-  //     new User("", [], this.user().balance)
-  //   )
-  //   this.gameStarted = false
-  //   this.roundOver = false
-  //   this.dealer.set(new User("dealer", [], 10000000))
-  // }
+  setResultPage(prizeAmount: number, title: string, handIndex: number) {
+    this.resultList.push(new ResultDetails(title, prizeAmount, handIndex))
+  }
 
   saveUsersStatsToLocalStorage() {
 
+  }
+
+  setNewRound(){
+    this.user.actualHandIndex = 0
+    this.user.handList = []
+    this.roundOver = false
+    this.boxList.set([])
+    this.dealer.actualHandIndex = 0
+    this.dealer.handList = []
+
+    this.setDeck()
+    this.gameStarted = false
+    this.resultList = []
   }
 }

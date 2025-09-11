@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Game } from '../../services/game';
-import { Hand } from './../../models/hand.model';
+import { Hand } from '../../models/hand.model';
 
 @Component({
   selector: 'app-user-place',
@@ -8,7 +8,7 @@ import { Hand } from './../../models/hand.model';
   templateUrl: './user-place.html',
   styleUrl: './user-place.scss'
 })
-export class UserPlace implements OnInit{
+export class UserPlace implements OnInit {
   gameService = inject(Game)
   handRows: Hand[][] = []
 
@@ -17,7 +17,7 @@ export class UserPlace implements OnInit{
   }
 
   double() {
-    if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value *2 > this.gameService.user.balance){
+    if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value * 2 > this.gameService.user.balance) {
       alert("You don't have enough money for double!")
       return
     }
@@ -30,11 +30,18 @@ export class UserPlace implements OnInit{
   }
 
   split() {
-    const actaulHand: Hand = this.gameService.user.handList[this.gameService.user.actualHandIndex]
+    if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value * 2 > this.gameService.user.balance) {
+      alert("You don't have enough money for split!")
+      return
+    }
 
+    const actaulHand: Hand = this.gameService.user.handList[this.gameService.user.actualHandIndex]
     const newHand = new Hand([actaulHand.cardList[1]], actaulHand.cardList[1].value, actaulHand.bet)
+    this.gameService.boxList.set(this.gameService.boxList().flatMap(i => [i, i]))
+    this.gameService.user.balance = (this.gameService.user.balance - actaulHand.bet)
 
     this.gameService.user.handList[this.gameService.user.actualHandIndex].removeCard()
+
     this.gameService.user.addHand(newHand)
 
     this.setHandRows()
@@ -43,12 +50,12 @@ export class UserPlace implements OnInit{
   stand() {
     this.gameService.user.handList[this.gameService.user.actualHandIndex].isStanded = true
 
-    if(this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length){
+    if (this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length) {
       this.gameService.dealersRound()
+      this.gameService.showResultPage = true
     }
     else {
       this.gameService.user.actualHandIndex = (this.gameService.user.actualHandIndex + 1)
-      console.log(this.gameService.user.handList[this.gameService.user.actualHandIndex])
     }
   }
 
@@ -65,28 +72,35 @@ export class UserPlace implements OnInit{
     }
 
     this.gameService.user.handList[this.gameService.user.actualHandIndex].addCard(selectedCard)
-    console.log(this.gameService.user.handList[this.gameService.user.actualHandIndex])
+    this.gameService.deck.splice(randomIndex, 1)
 
-
-    if(this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length){
-      if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value >= 21){
+    if (this.gameService.user.actualHandIndex + 1 == this.gameService.user.handList.length) {
+      if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value == 21) {
         this.gameService.dealersRound()
+        this.gameService.showResultPage = true
+      } else if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value > 21) {
+
+        for (let i: number = 0; i < this.gameService.user.handList.length; i++) {
+          this.gameService.checkRoundEnd("hit", this.gameService.user.handList[i], i)
+        }
+        this.gameService.showResultPage = true
       }
     } else {
-      // this.gameService.user.handList[this.gameService.user.actualHandIndex].addCard(selectedCard)
-      if(this.gameService.user.handList[this.gameService.user.actualHandIndex].value >= 21){
-        this.gameService.user.actualHandIndex = (this.gameService.user.actualHandIndex + 1 )
+      if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value > 21) {
+        this.gameService.user.actualHandIndex = (this.gameService.user.actualHandIndex + 1)
+      } else if (this.gameService.user.handList[this.gameService.user.actualHandIndex].value == 21) {
+        this.gameService.dealersRound()
       }
     }
 
     this.setHandRows()
   }
 
-  setHandRows(){
+  setHandRows() {
     this.handRows = []
-    for(let i: number = 0; i < this.gameService.user.handList.length; i+= 2){
+    for (let i: number = 0; i < this.gameService.user.handList.length; i += 2) {
       const handRow: Hand[] = []
-      for (let j: number = i; j< i+2; j++){
+      for (let j: number = i; j < i + 2; j++) {
         handRow.push(this.gameService.user.handList[j])
       }
       this.handRows.push(handRow)

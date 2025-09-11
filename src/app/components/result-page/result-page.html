@@ -7,27 +7,20 @@
         <div class="row w-100">
           <div class="col-lg-12 d-flex justify-content-between align-items-center flex-row w-100">
             <div></div>
-            <h1 class="text-center my-4">{{gameService.resultObject.title}}</h1>
+            <h1 class="text-center my-4">Result</h1>
             <button class="btn btn-success" (click)="close()">X</button>
           </div>
         </div>
 
-        <div class="row">
-          <div class="col-lg-12">
-            <p>
-              @if(gameService.resultObject.moneyResult == 0){
-                You lost
-              } @else {
-                You won
-              }
-              {{gameService.boxValue()}}$
-            </p>
-          </div>
-        </div>
+
 
         <div class="row my-4">
           <div class="col-lg-12">
-            <!-- <button class="btn btn-success">Kilépés</button> -->
+            @for (result of gameService.resultList; track $index) {
+              <p>
+                Hand {{result.handIndex + 1}}: {{result.title}}, You {{result.prizeAmount < 0 ? 'lose' : 'won'}} {{result.prizeAmount}}
+              </p>
+            }
           </div>
         </div>
 

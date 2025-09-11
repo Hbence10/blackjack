@@ -2,11 +2,11 @@
   <div class="row">
     <div class="col-lg-2 d-flex flex-column">
       <!-- roundOver mindenhova -->
-      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded || gameService.user.handList[gameService.user.actualHandIndex].isDoubled || gameService.user.handList[gameService.user.actualHandIndex].cardList.length != 2" (click)="double()">Double</button>
+      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded || gameService.user.handList[gameService.user.actualHandIndex].isDoubled || gameService.user.handList[gameService.user.actualHandIndex].cardList.length != 2 || gameService.roundOver" (click)="double()">Double</button>
 
-      <button class="btn btn-danger my-2" [disabled]="!(gameService.user.handList[gameService.user.actualHandIndex].cardList.length == 2 && gameService.user.handList[gameService.user.actualHandIndex].cardList[0].value == gameService.user.handList[gameService.user.actualHandIndex].cardList[1].value)" (click)="split()">Split</button>
-      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded" (click)="stand()">Stand</button>
-      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded" (click)="hit()">Hit</button>
+      <button class="btn btn-danger my-2" [disabled]="(!(gameService.user.handList[gameService.user.actualHandIndex].cardList.length == 2 && gameService.user.handList[gameService.user.actualHandIndex].cardList[0].value == gameService.user.handList[gameService.user.actualHandIndex].cardList[1].value)) || gameService.roundOver" (click)="split()">Split</button>
+      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded || gameService.roundOver" (click)="stand()">Stand</button>
+      <button class="btn btn-danger my-2" [disabled]="gameService.user.handList[gameService.user.actualHandIndex].isStanded || gameService.roundOver" (click)="hit()">Hit</button>
     </div>
 
     <div class="col-lg-10">
@@ -15,13 +15,15 @@
           <div class="row">
             @for(hand of handRow; track $index; let handI = $index){
               <div [class.col-lg-12]="handRow[1] == undefined" [class.col-lg-6]="handRow[1] != undefined">
+                <h5 [class.activeHand]="((rowI*2)+(handI)) == gameService.user.actualHandIndex" class="text-danger">Hand {{(rowI*2)+(handI+1)}}</h5>
 
-                @if(handRow[1] != undefined){
-                  <h5 [class.activeHand]="((rowI*2)+(handI)) == gameService.user.actualHandIndex" class="text-danger">Hand {{(rowI*2)+(handI+1)}}</h5>
-                }
                 <div>
-                  @for (card of hand.cardList; track $index) {
-                    <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg mx-1"/>
+                  @if(hand != undefined){
+                    @for (card of hand.cardList; track $index) {
+                    @if(card != undefined){
+                      <img [src]="card.isUpsideDown ? card.backImgPath : card.faceImgPath" alt="" class="img-fluid cardImg mx-1"/>
+                    }
+                  }
                   }
                 </div>
               </div>

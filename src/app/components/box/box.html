@@ -5,7 +5,9 @@
           @for (chipRow of splittedChipsRow(); track $index) {
             <div>
             @for (chip of chipRow; track $index){
-              <img [class.disableEvent]="gameService.gameStarted" (click)="removeChipFromBox(chip)" class="img-fluid moneyImg" [src]="chip.imgPath" alt="">
+              @if(chip != undefined){
+                <img [class.disableEvent]="gameService.gameStarted" (click)="removeChipFromBox(chip)" class="img-fluid moneyImg" [src]="chip.imgPath" alt="">
+              }
             }
             </div>
           }

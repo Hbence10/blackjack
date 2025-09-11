@@ -2,6 +2,7 @@ import { Component, inject, OnInit, output, signal } from '@angular/core';
 import { Chips } from '../../models/chips.model';
 import { Game } from '../../services/game';
 import { CommonModule } from '@angular/common';
+import { User } from '../../models/user.model';
 
 @Component({
   selector: 'app-user-money',
@@ -9,7 +10,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './user-money.html',
   styleUrl: './user-money.scss'
 })
-export class UserMoney {
+export class UserMoney{
   gameService = inject(Game)
 
   allIn(){
@@ -31,7 +32,12 @@ export class UserMoney {
   }
 
   addChipToBox(selectedChip: Chips){
+    if(selectedChip.value > this.gameService.user.balance){
+      alert("You don't have enough money for this chip!")
+      return;
+    }
+
     this.gameService.boxList.update(old => [...old, selectedChip])
-    this.gameService.user.balance = this.gameService.user.balance - selectedChip.value
+    this.gameService.user.balance = (this.gameService.user.balance - selectedChip.value)
   }
 }
